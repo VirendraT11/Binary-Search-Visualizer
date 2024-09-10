@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Search Algorithm Visualizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+        main {
+            display: flex;
+            flex: 1;
+        }
+        #visualizer {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        #control-panel {
+            width: 300px;
+            padding: 1rem;
+            background-color: #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+        #array-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 200px;
+        }
+        .array-element {
+            width: 40px;
+            background-color: #4CAF50;
+            margin: 0 2px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            color: white;
+            font-weight: bold;
+            transition: height 0.3s ease;
+        }
+        .array-element.highlight {
+            background-color: #FFC107;
+        }
+        .array-element.target {
+            background-color: #F44336;
+        }
+        button {
+            margin: 5px 0;
+            padding: 5px 10px;
+            font-size: 16px;
+        }
+        input {
+            margin: 5px 0;
+            padding: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Binary Search Algorithm Visualizer</h1>
+    </header>
+    <main>
+        <div id="visualizer">
+            <div id="array-container"></div>
+        </div>
+        <div id="control-panel">
+            <h2>Control Panel</h2>
+            <input type="text" id="array-input" placeholder="Enter comma-separated numbers">
+            <button id="generate-array">Generate Random Array</button>
+            <input type="number" id="target-input" placeholder="Enter target number">
+            <button id="start-search">Start Search</button>
+            <button id="step-forward">Step Forward</button>
+            <button id="step-backward">Step Backward</button>
+            <button id="reset">Reset</button>
+            <div id="info"></div>
+        </div>
+    </main>
+
+    <script>
+        let array = [];
+        let target = null;
+        let left = 0;
+        let right = 0;
+        let mid = 0;
+        let step = 0;
+        let found = false;
+
+        const arrayContainer = document.getElementById('array-container');
+        const arrayInput = document.getElementById('array-input');
+        const targetInput = document.getElementById('target-input');
+        const generateArrayBtn = document.getElementById('generate-array');
+        const startSearchBtn = document.getElementById('start-search');
+        const stepForwardBtn = document.getElementById('step-forward');
+        const stepBackwardBtn = document.getElementById('step-backward');
+        const resetBtn = document.getElementById('reset');
+        const infoDiv = document.getElementById('info');
+
+        function initializeArray() {
+            array = arrayInput.value.split(',').map(num => parseInt(num.trim())).filter(num => !isNaN(num));
+            array.sort((a, b) => a - b);
+            arrayInput.value = array.join(', ');
+            visualizeArray();
+        }
+
+        function generateRandomArray() {
+            const size = Math.floor(Math.random() * 10) + 5; // 5 to 14 elements
+            array = Array.from({length: size}, () => Math.floor(Math.random() * 100) + 1);
+            array.sort((a, b) => a - b);
+            arrayInput.value = array.join(', ');
+            visualizeArray();
+        }
+
+        function visualizeArray() {
+            arrayContainer.innerHTML = '';
+            array.forEach((num, index) => {
+                const element = document.createElement('div');
+                element.className = 'array-element';
+                element.style.height = `${num * 2}px`;
+                element.textContent = num;
+                if (index === mid) element.classList.add('highlight');
+                if (num === target) element.classList.add('target');
+                arrayContainer.appendChild(element);
+            });
+        }
+
+        function startSearch() {
+            target = parseInt(targetInput.value);
+            if (isNaN(target)) {
+                alert('Please enter a valid target number');
+                return;
+            }
+            left = 0;
+            right = array.length - 1;
+            mid = Math.floor((left + right) / 2);
+            step = 0;
+            found = false;
+            visualizeArray();
+            updateInfo();
+        }
+
+        function stepForward() {
+            if (found || left > right) return;
+            step++;
+            if (array[mid] === target) {
+                found = true;
+            } else if (array[mid] < target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+            mid = Math.floor((left + right) / 2);
+            visualizeArray();
+            updateInfo();
+        }
+
+        function stepBackward() {
+            if (step === 0) return;
+            step--;
+            // This is a simplified back step. In a real application, you'd need to store the state history.
+            left = 0;
+            right = array.length - 1;
+            for (let i = 0; i < step; i++) {
+                if (array[mid] === target) {
+                    break;
+                } else if (array[mid] < target) {
+                    left = mid + 1;
+                } else {
+                    right = mid - 1;
+                }
+                mid = Math.floor((left + right) / 2);
+            }
+            found = false;
+            visualizeArray();
+            updateInfo();
+        }
+
+        function updateInfo() {
+            let info = `Step: ${step}<br>`;
+            info += `Searching: ${left} to ${right}<br>`;
+            info += `Middle: ${mid} (Value: ${array[mid]})<br>`;
+            if (found) {
+                info += `Target ${target} found at index ${mid}`;
+            } else if (left > right) {
+                info += `Target ${target} not found in the array`;
+            }
+            infoDiv.innerHTML = info;
+        }
+
+        function reset() {
+            array = [];
+            target = null;
+            left = 0;
+            right = 0;
+            mid = 0;
+            step = 0;
+            found = false;
+            arrayInput.value = '';
+            targetInput.value = '';
+            arrayContainer.innerHTML = '';
+            infoDiv.innerHTML = '';
+        }
+
+        arrayInput.addEventListener('change', initializeArray);
+        generateArrayBtn.addEventListener('click', generateRandomArray);
+        startSearchBtn.addEventListener('click', startSearch);
+        stepForwardBtn.addEventListener('click', stepForward);
+        stepBackwardBtn.addEventListener('click', stepBackward);
+        resetBtn.addEventListener('click', reset);
+
+        // Initialize with a random array
+        generateRandomArray();
+    </script>
+</body>
+</html>
